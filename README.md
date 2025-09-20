@@ -13,19 +13,6 @@ A modern, full-featured e-commerce web application built with a React frontend a
 
 LocalStore is a full-stack e-commerce platform designed to provide a seamless shopping experience. It features a clean and intuitive user interface and a robust backend that handles all the business logic, from product management to order processing.
 
-### Live Demo
-
-[Link to Live Demo](https://your-live-demo-link.com) (Replace with your actual link)
-
----
-
-## Screenshots
-
-*(Add screenshots of your application here to showcase its features and design.)*
-
-![Screenshot 1](https://via.placeholder.com/468x300?text=Homepage)
-![Screenshot 2](https://via.placeholder.com/468x300?text=Product+Page)
-
 ---
 
 ## Built With
@@ -122,10 +109,4 @@ Contributions are what make the open-source community such an amazing place to l
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
----
 
-## Contact
-
-Your Name - [@your_twitter](https://twitter.com/your_twitter) - touseefurrehman5554@gmail.com
-
-Project Link: [https://github.com/touseef7878/PRODIGY_FS_03](https://github.com/touseef7878/PRODIGY_FS_03)
