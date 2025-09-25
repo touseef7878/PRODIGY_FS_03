@@ -1,112 +1,145 @@
-# LocalStore E-Commerce Application
+# LocalStore E-commerce Application
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![GitHub issues](https://img.shields.io/github/issues/touseef7878/PRODIGY_FS_03)
-![GitHub forks](https://img.shields.io/github/forks/touseef7878/PRODIGY_FS_03)
-![GitHub stars](https://img.shields.io/github/stars/touseef7878/PRODIGY_FS_03)
-
-A modern, full-featured e-commerce web application built with a React frontend and a Flask backend. This project simulates a real-world online store, complete with product listings, a shopping cart, and a checkout process.
-
----
-
-## About The Project
-
-LocalStore is a full-stack e-commerce platform designed to provide a seamless shopping experience. It features a clean and intuitive user interface and a robust backend that handles all the business logic, from product management to order processing.
-
----
-
-## Built With
-
-This project is built with a modern tech stack, including:
-
--   **Backend:**
-    -   [Flask](https://flask.palletsprojects.com/)
-    -   [SQLAlchemy](https://www.sqlalchemy.org/)
-    -   [SQLite](https://www.sqlite.org/)
--   **Frontend:**
-    -   [React](https://reactjs.org/)
-    -   [Vite](https://vitejs.dev/)
-    -   [Tailwind CSS](https://tailwindcss.com/)
-
----
+A modern e-commerce web application with professional user authentication, role-based access control, and a comprehensive shopping experience.
 
 ## Features
 
--   **Product Catalog:** Browse products with search, filtering, and sorting.
--   **Shopping Cart:** Add, remove, and update items in the cart.
--   **Simulated Checkout:** A complete checkout flow with simulated payments.
--   **Order Tracking:** Users can track the status of their orders.
--   **Admin Endpoints:** API endpoints for product management.
--   **Responsive Design:** A clean UI that works on all devices.
+- Professional header with user profile management
+- Role-based authentication (User/Admin)
+- Product browsing and searching
+- Shopping cart functionality
+- Checkout process with mobile payment integration (JazzCash/EasyPaisa)
+- Order tracking
+- Admin panel for product and order management
 
----
+## Authentication System
 
-## Getting Started
+### Role Selection
+When clicking the user profile icon (top-right corner of the header), users are presented with a role selection screen to choose between:
+- **Customer**: Regular user for shopping
+- **Admin**: Store administrator
 
-To get a local copy up and running, follow these simple steps.
+### Customer Login/Signup
+- Navigate to Login/Signup page by clicking the user profile icon
+- Create an account or login with existing credentials
+- After authentication, customers can:
+  - Browse products
+  - Add items to cart
+  - Place orders
+  - Track orders using the Order ID
 
-### Prerequisites
+### Admin Login
+- Navigate to Login page by clicking the user profile icon
+- Use the following credentials for admin access:
+  - **Email**: admin@localstore.pk
+  - **Password**: admin123
+- After authentication, admins can:
+  - Add new products
+  - Edit existing products
+  - Delete products
+  - View transaction history
+  - Monitor payment notifications
+  - Update order tracking status
 
-Make sure you have the following software installed on your machine:
+## Project Structure
 
--   [Git](https://git-scm.com/)
--   [Python 3.7+](https://www.python.org/)
--   [Node.js v14+](https://nodejs.org/)
+```
+PRODIGY_FS_03/
+├── backend/
+│   ├── app.py
+│   └── ...
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── App.jsx (Main application component)
+│   │   ├── App.css (Styling)
+│   │   └── index.css
+│   ├── package.json
+│   └── ...
+├── BUILD.md
+├── README.md
+└── requirements.txt
+```
 
-### Installation
+## UI/UX Improvements
 
-1.  **Clone the repository:**
-    ```sh
-    git clone https://github.com/touseef7878/PRODIGY_FS_03.git
-    cd PRODIGY_FS_03
-    ```
+### Header Redesign
+- Removed the prominent "Admin" button from the center of the header
+- Added a professional user profile icon in the top-right corner
+- Added dropdown menu with user options when authenticated
+- Implemented responsive design for all screen sizes
 
-2.  **Backend Setup:**
-    -   Navigate to the `backend` directory.
-    -   Create and activate a Python virtual environment.
-    -   Install the required dependencies.
+### Authentication Flows
+- **Role Selection Page**: Clean interface to choose between customer and admin
+- **User Login/Signup Page**: Professional form with validation
+- **Admin Login Page**: Secure login with fixed credentials
+- **Consistent Design**: All login flows match the site's color scheme, gradients, and rounded styling
 
-3.  **Frontend Setup:**
-    -   Navigate to the `frontend` directory.
-    -   Install the required npm packages.
+### Security & Session Management
+- Token-based authentication using localStorage
+- Proper role-based access control
+- Secure logout functionality
+- Session persistence across page reloads
 
-For detailed, step-by-step instructions for both the backend and frontend, please refer to the **[Build and Setup Guide](./BUILD.md)**.
+## How to Use
 
-### Usage
+1. **Start the Application**
+   - Run the backend server: `python backend/app.py`
+   - Run the frontend: `cd frontend && npm run dev`
+   - Visit `http://localhost:5000` in your browser
 
-Once both the backend and frontend servers are running:
+2. **As a Customer**
+   - Click the user profile icon in the top-right
+   - Select "Customer" role
+   - Either sign up with a new account or login with existing credentials
+   - Browse products and add items to cart
+   - Proceed to checkout to place orders
 
-1.  Open your browser and navigate to `http://localhost:5173`.
-2.  Explore the product catalog, add items to your cart, and proceed to checkout.
+3. **As an Admin**
+   - Click the user profile icon in the top-right
+   - Select "Admin" role
+   - Login with the admin credentials (admin@localstore.pk / admin123)
+   - Access the admin panel to manage products and orders
 
----
+4. **Order Tracking**
+   - After placing an order, use the "Track Order" feature
+   - Enter the provided tracking ID to view order status
+   - Track shipment progress from order placement to delivery
 
-## API Endpoints
+## Technical Implementation
 
-The backend provides a RESTful API. Key endpoints include:
+### Frontend Technologies
+- React.js
+- Lucide React icons
+- CSS with custom properties and gradients
 
--   `GET /api/products`: Fetch all products.
--   `GET /api/products/:id`: Get a single product.
--   `POST /api/orders`: Create a new order.
+### Authentication Flow
+1. User clicks profile icon in header
+2. Role selection screen appears
+3. User selects role (Customer/Admin) and proceeds to login
+4. Credentials are validated
+5. User data and authentication token are stored in localStorage
+6. Appropriate UI is displayed based on user role
+7. Upon logout, all stored authentication data is cleared
 
-For a full list, see `backend/app.py`.
+### State Management
+- React Context API for authentication state
+- React Context API for cart functionality
+- LocalStorage for persistent authentication
 
----
+## Security Considerations
+- Client-side authentication with localStorage
+- Role-based access control for sensitive functionality
+- Input validation and sanitization
+- Secure credential handling
 
-## Contributing
+## Responsive Design
+- Fully responsive layout for all screen sizes
+- Mobile-friendly navigation and authentication flows
+- Adaptive components for different devices
 
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
-
----
-
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
-
+## Development Notes
+- Authentication state persists between sessions
+- All authentication flows use consistent styling
+- Admin credentials are hardcoded for demo purposes
+- Real-world implementation would connect to backend authentication service

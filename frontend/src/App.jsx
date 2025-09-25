@@ -1,6 +1,58 @@
 import React, { createContext, useContext, useReducer, useState, useEffect } from 'react';
 import { ShoppingCart, Search, Heart, Star, Plus, Minus, Trash2, User, Package, CreditCard, MapPin, Phone, Mail, Filter, ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
 
+// Auth Context
+const AuthContext = createContext();
+
+const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check if user is authenticated on app load
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('userData');
+    
+    if (token && userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('Error parsing user data from localStorage:', error);
+      }
+    }
+  }, []);
+
+  const login = (userData, token) => {
+    setUser(userData);
+    setIsAuthenticated(true);
+    localStorage.setItem('token', token);
+    localStorage.setItem('userData', JSON.stringify(userData));
+  };
+
+  const logout = () => {
+    setUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('token');
+    localStorage.removeItem('userData');
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
 // Mock API Base URL
 const API_BASE = 'http://localhost:5000/api';
 
@@ -174,8 +226,9 @@ const mockReviews = [
 ];
 
 // Components
-const Header = ({ currentPage, setCurrentPage, searchQuery, setSearchQuery }) => {
+const Header = ({ currentPage, setCurrentPage, searchQuery, setSearchQuery, isAuthenticated, user, logout }) => {
   const { getTotalItems, setIsOpen } = useCart();
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   return (
     <header>
@@ -183,18 +236,6 @@ const Header = ({ currentPage, setCurrentPage, searchQuery, setSearchQuery }) =>
         <div className="logo" onClick={() => setCurrentPage('home')}>
           LocalStore
         </div>
-        <nav>
-          <ul>
-            <li>
-              <button
-                onClick={() => setCurrentPage('admin')}
-                className={`admin-nav-button ${currentPage === 'admin' ? 'active' : ''}`}
-              >
-                Admin
-              </button>
-            </li>
-          </ul>
-        </nav>
 
         <div className="search-container">
           <div className="search-icon">
@@ -208,17 +249,101 @@ const Header = ({ currentPage, setCurrentPage, searchQuery, setSearchQuery }) =>
           />
         </div>
 
-        <button
-          onClick={() => setIsOpen(true)}
-          className="cart-button"
-        >
-          <ShoppingCart />
-          {getTotalItems() > 0 && (
-            <span className="cart-count">
-              {getTotalItems()}
-            </span>
-          )}
-        </button>
+        <div className="header-actions">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="cart-button"
+          >
+            <ShoppingCart />
+            {getTotalItems() > 0 && (
+              <span className="cart-count">
+                {getTotalItems()}
+              </span>
+            )}
+          </button>
+          
+          <div className="user-menu-container">
+            <button 
+              className="user-profile-button"
+              onClick={() => setShowUserMenu(!showUserMenu)}
+            >
+              <User size={24} />
+            </button>
+            
+            {showUserMenu && (
+              <div className="dropdown-menu">
+                <div className="dropdown-content">
+                  {!isAuthenticated ? (
+                    // Options when logged out
+                    <>
+                      <button 
+                        onClick={() => {
+                          setCurrentPage('login-selection');
+                          setShowUserMenu(false);
+                        }}
+                        className="dropdown-item"
+                      >
+                        Login
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setCurrentPage('login-selection');
+                          setShowUserMenu(false);
+                        }}
+                        className="dropdown-item"
+                      >
+                        Sign Up
+                      </button>
+                    </>
+                  ) : (
+                    // Options when logged in
+                    <>
+                      {user.role === 'user' && (
+                        <>
+                          <button 
+                            onClick={() => {
+                              setCurrentPage('home');
+                              setShowUserMenu(false);
+                            }}
+                            className="dropdown-item"
+                          >
+                            My Account
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setCurrentPage('track-order');
+                              setShowUserMenu(false);
+                            }}
+                            className="dropdown-item"
+                          >
+                            My Orders/Track Order
+                          </button>
+                        </>
+                      )}
+                      {user.role === 'admin' && (
+                        <button 
+                          onClick={() => {
+                            setCurrentPage('admin');
+                            setShowUserMenu(false);
+                          }}
+                          className="dropdown-item"
+                        >
+                          Admin Dashboard
+                        </button>
+                      )}
+                      <button 
+                        onClick={logout}
+                        className="dropdown-item logout-btn"
+                      >
+                        Logout
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </header>
   );
@@ -1540,6 +1665,256 @@ const Notification = ({ notification, onClose }) => {
   );
 };
 
+// Login Selection Component
+const LoginSelection = ({ onLogin, onSignup, onAdminLogin }) => {
+  return (
+    <div className="login-selection-page">
+      <div className="login-selection-container">
+        <div className="login-selection-card">
+          <h1 className="form-title">Login or Sign Up</h1>
+          <p className="login-selection-subtitle">Access your account or create a new one</p>
+          
+          <div className="auth-selection-buttons">
+            <button 
+              className="auth-btn login-role"
+              onClick={onLogin}
+            >
+              <User size={40} />
+              <span>Login</span>
+              <p>Sign in to your account</p>
+            </button>
+            
+            <button 
+              className="auth-btn signup-role"
+              onClick={onSignup}
+            >
+              <User size={40} />
+              <span>Sign Up</span>
+              <p>Create a new account</p>
+            </button>
+          </div>
+          
+          <div className="admin-login-link">
+            <button
+              className="auth-btn admin-role"
+              onClick={onAdminLogin}
+            >
+              <User size={40} />
+              <span>Admin Login</span>
+              <p>Access admin panel</p>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// User Login Component
+const UserLogin = ({ onLogin, onBack, onSignup }) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLogin, setIsLogin] = useState(true);
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    if (!isLogin) {
+      if (password !== confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
+      
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters');
+        return;
+      }
+    }
+    
+    // In a real app, we would authenticate with backend
+    if (isLogin) {
+      onLogin({ email, password, role: 'user' });
+    } else {
+      onSignup({ name, email, password, role: 'user' });
+    }
+  };
+
+  return (
+    <div className="login-page">
+      <div className="login-container">
+        <div className="login-card">
+          <h1 className="form-title">{isLogin ? 'Login' : 'Sign Up'}</h1>
+          <p className="login-subtitle">{isLogin ? 'Welcome back! Please sign in' : 'Create your account'}</p>
+          
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="login-form">
+            <div className="form-group">
+              {!isLogin && (
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  className="form-input"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              )}
+              <input
+                type="email"
+                placeholder="Email Address"
+                className="form-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                className="form-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              {!isLogin && (
+                <input
+                  type="password"
+                  placeholder="Confirm Password"
+                  className="form-input"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              )}
+            </div>
+            
+            {isLogin && (
+              <div className="form-group">
+                <a href="#" className="forgot-password">Forgot Password?</a>
+              </div>
+            )}
+            
+            <button type="submit" className="submit-btn">
+              {isLogin ? 'Login' : 'Sign Up'}
+            </button>
+            
+            <p className="form-footer">
+              {isLogin ? "Don't have an account?" : "Already have an account?"}
+              <button 
+                type="button" 
+                className="toggle-auth-btn"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError('');
+                }}
+              >
+                {isLogin ? 'Sign Up' : 'Login'}
+              </button>
+            </p>
+          </form>
+          
+          <button 
+            className="back-btn"
+            onClick={onBack}
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Admin Login Component
+const AdminLogin = ({ onLogin, onBack }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Fixed admin credentials
+    if (email === 'admin@localstore.pk' && password === 'admin123') {
+      onLogin({ email, password, role: 'admin' });
+    } else {
+      setError('Invalid admin credentials');
+    }
+  };
+
+  return (
+    <div className="login-page">
+      <div className="login-container">
+        <div className="login-card">
+          <h1 className="form-title">Admin Login</h1>
+          <p className="login-subtitle">Access admin panel to manage store</p>
+          
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+          
+          <form onSubmit={handleSubmit} className="login-form">
+            <div className="form-group">
+              <input
+                type="email"
+                placeholder="Admin Email"
+                className="form-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <input
+                type="password"
+                placeholder="Admin Password"
+                className="form-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            
+            <button type="submit" className="submit-btn">
+              Admin Login
+            </button>
+            
+            <div className="admin-credentials-hint">
+              <p><strong>Admin credentials:</strong></p>
+              <p>Email: admin@localstore.pk</p>
+              <p>Password: admin123</p>
+            </div>
+            
+            <p className="form-footer">
+              <button 
+                type="button" 
+                className="toggle-auth-btn"
+                onClick={onBack}
+              >
+                Back to Home
+              </button>
+            </p>
+          </form>
+          
+          <button 
+            className="back-btn"
+            onClick={onBack}
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Main App Component
 const App = () => {
   const [currentPage, setCurrentPage] = useState('home');
@@ -1553,6 +1928,8 @@ const App = () => {
   const [notifications, setNotifications] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [trackingInfo, setTrackingInfo] = useState({});
+  
+  const { user, isAuthenticated, login, logout } = useAuth();
 
   const categories = [...new Set(products.map(p => p.category))];
 
@@ -1641,6 +2018,9 @@ const App = () => {
           setCurrentPage={setCurrentPage}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          isAuthenticated={isAuthenticated}
+          user={user}
+          logout={logout}
         />
         <CartSidebar />
 
@@ -1719,7 +2099,36 @@ const App = () => {
         )}
 
         {currentPage === 'admin' && (
-          <AdminPanel products={products} setProducts={setProducts} transactions={transactions} trackingInfo={trackingInfo} setTrackingInfo={setTrackingInfo} />
+          <>
+            {isAuthenticated && user?.role === 'admin' ? (
+              <AdminPanel products={products} setProducts={setProducts} transactions={transactions} trackingInfo={trackingInfo} setTrackingInfo={setTrackingInfo} />
+            ) : (
+              <div className="unauthorized-page">
+                <div className="unauthorized-container">
+                  <div className="unauthorized-card">
+                    <h1 className="form-title">
+                      {isAuthenticated ? 'Access Denied' : 'Admin Login Required'}
+                    </h1>
+                    <p className="unauthorized-message">
+                      {isAuthenticated 
+                        ? 'Admin access required to view this page' 
+                        : 'Please login to access the admin panel'}
+                    </p>
+                    <button 
+                      className="submit-btn"
+                      onClick={() => 
+                        isAuthenticated 
+                          ? setCurrentPage('home') 
+                          : setCurrentPage('login-selection')
+                      }
+                    >
+                      {isAuthenticated ? 'Go Home' : 'Login'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {currentPage === 'checkout' && (
@@ -1741,6 +2150,44 @@ const App = () => {
         {currentPage === 'track-order' && (
           <TrackOrderPage 
             trackingInfo={trackingInfo}
+            onBack={() => setCurrentPage('home')}
+          />
+        )}
+        
+        {currentPage === 'login-selection' && (
+          <LoginSelection 
+            onLogin={() => setCurrentPage('user-login')}
+            onSignup={() => setCurrentPage('user-login')} // Sign up is handled on the same page as login
+            onAdminLogin={() => setCurrentPage('admin-login')}
+          />
+        )}
+        
+        {currentPage === 'user-login' && (
+          <UserLogin 
+            onLogin={(credentials) => {
+              // Simulate authentication
+              const token = 'user-token-' + Date.now();
+              login({ ...credentials, role: 'user', name: credentials.email.split('@')[0] }, token);
+              setCurrentPage('home');
+            }}
+            onSignup={(credentials) => {
+              // Simulate signup and authentication
+              const token = 'user-token-' + Date.now();
+              login({ ...credentials, role: 'user' }, token);
+              setCurrentPage('home');
+            }}
+            onBack={() => setCurrentPage('home')}
+          />
+        )}
+        
+        {currentPage === 'admin-login' && (
+          <AdminLogin 
+            onLogin={(credentials) => {
+              // Simulate admin authentication
+              const token = 'admin-token-' + Date.now();
+              login({ ...credentials, role: 'admin', name: 'Admin User' }, token);
+              setCurrentPage('admin');
+            }}
             onBack={() => setCurrentPage('home')}
           />
         )}
@@ -1834,4 +2281,10 @@ const TrackOrderPage = ({ trackingInfo, onBack }) => {
   );
 };
 
-export default App;
+export default function AppWrapper() {
+  return (
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
+}
