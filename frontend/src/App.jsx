@@ -93,8 +93,14 @@ const cartReducer = (state, action) => {
 export const CartProvider = ({ children, setCurrentPage }) => {
   const [cart, dispatch] = useReducer(cartReducer, []);
   const [isOpen, setIsOpen] = useState(false);
+  const { isAuthenticated, user } = useAuth();
 
   const addToCart = (product) => {
+    if (!isAuthenticated || (user && user.role !== 'user')) {
+      alert('Please log in as a user to add items to the cart.');
+      setCurrentPage('login-selection');
+      return;
+    }
     dispatch({ type: 'ADD_TO_CART', payload: product });
   };
 
@@ -119,6 +125,11 @@ export const CartProvider = ({ children, setCurrentPage }) => {
   };
 
   const goToCheckout = () => {
+    if (!isAuthenticated || (user && user.role !== 'user')) {
+      alert('Please log in as a user to proceed to checkout.');
+      setCurrentPage('login-selection');
+      return;
+    }
     setIsOpen(false);
     setCurrentPage('checkout');
   };
@@ -250,17 +261,25 @@ const Header = ({ currentPage, setCurrentPage, searchQuery, setSearchQuery, isAu
         </div>
 
         <div className="header-actions">
-          <button
-            onClick={() => setIsOpen(true)}
-            className="cart-button"
-          >
-            <ShoppingCart />
-            {getTotalItems() > 0 && (
-              <span className="cart-count">
-                {getTotalItems()}
-              </span>
-            )}
-          </button>
+          {user?.role !== 'admin' && (
+            <button
+              onClick={() => {
+                if (!isAuthenticated) {
+                  setCurrentPage('login-selection');
+                } else {
+                  setIsOpen(true);
+                }
+              }}
+              className="cart-button"
+            >
+              <ShoppingCart />
+              {getTotalItems() > 0 && (
+                <span className="cart-count">
+                  {getTotalItems()}
+                </span>
+              )}
+            </button>
+          )}
           
           <div className="user-menu-container">
             <button 
@@ -351,6 +370,7 @@ const Header = ({ currentPage, setCurrentPage, searchQuery, setSearchQuery, isAu
 
 const ProductCard = ({ product, onViewDetails }) => {
   const { addToCart } = useCart();
+  const { user } = useAuth();
 
   return (
     <div className="product-card">
@@ -391,12 +411,14 @@ const ProductCard = ({ product, onViewDetails }) => {
             >
               View
             </button>
-            <button
-              onClick={() => addToCart(product)}
-              className="btn-add-cart"
-            >
-              Add to Cart
-            </button>
+            {user?.role !== 'admin' && (
+              <button
+                onClick={() => addToCart(product)}
+                className="btn-add-cart"
+              >
+                Add to Cart
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -406,6 +428,7 @@ const ProductCard = ({ product, onViewDetails }) => {
 
 const ProductDetail = ({ product, onBack }) => {
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
@@ -459,40 +482,44 @@ const ProductDetail = ({ product, onBack }) => {
                 <p className="stock-status">In Stock ({product.stock} available)</p>
               </div>
 
-              <div className="quantity-selector">
-                <span className="quantity-label">Quantity:</span>
-                <div className="quantity-controls">
+              {user?.role !== 'admin' && (
+                <div className="quantity-selector">
+                  <span className="quantity-label">Quantity:</span>
+                  <div className="quantity-controls">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="quantity-btn-detail"
+                    >
+                      <Minus />
+                    </button>
+                    <span className="quantity-value-detail">{quantity}</span>
+                    <button
+                      onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                      className="quantity-btn-detail"
+                    >
+                      <Plus />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {user?.role !== 'admin' && (
+                <div className="product-detail-actions">
                   <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="quantity-btn-detail"
+                    onClick={() => {
+                      for (let i = 0; i < quantity; i++) {
+                        addToCart(product);
+                      }
+                    }}
+                    className="add-to-cart-btn"
                   >
-                    <Minus />
+                    Add to Cart
                   </button>
-                  <span className="quantity-value-detail">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                    className="quantity-btn-detail"
-                  >
-                    <Plus />
+                  <button className="wishlist-btn">
+                    <Heart />
                   </button>
                 </div>
-              </div>
-
-              <div className="product-detail-actions">
-                <button
-                  onClick={() => {
-                    for (let i = 0; i < quantity; i++) {
-                      addToCart(product);
-                    }
-                  }}
-                  className="add-to-cart-btn"
-                >
-                  Add to Cart
-                </button>
-                <button className="wishlist-btn">
-                  <Heart />
-                </button>
-              </div>
+              )}
 
               {/* Tabs */}
               <div className="tabs">
